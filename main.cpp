@@ -12,13 +12,16 @@
 #include <cctype>
 #include <locale>
 // directory reading
-#include <experimental/filesystem>
+#include <filesystem>
 
 using namespace std;
-namespace fs = std::experimental::filesystem;
+namespace fs = filesystem;
 
 /* drag files below to get its directory, then copy+paste when prompted:
  /Users/drag/file/here/for/path/name
+ 
+ /Users/henry/Desktop/2020-resolutions
+ /Users/henry/Desktop/2021-resolutions
  */
 
 string fullTrim(string s){
@@ -34,6 +37,13 @@ bool pathExists(const fs::path& p, fs::file_status s = fs::file_status{}){
     if(fs::status_known(s) ? fs::exists(s) : fs::exists(p))
         return 1;
     return 0;
+}
+
+// eliminate some hidden files (i.e. ".DS_store")
+bool isHidden(string path){
+    if(path != ".." && path != "."  && (int)path.length() >= 2 && path[1] != '.')
+        return false;
+    return true;
 }
 
 string padStr(string s, int length){
@@ -106,11 +116,15 @@ int main(){
     startComparingDirectoriesLine:   // upon ending, refresh/reupdate starts here
         for (const auto & entry: fs::directory_iterator( s1 )){
             string p = entry.path();
-            v1.push_back(p.substr(p.find_last_of("/\\"), (int)p.length()));
+            string reducedP = p.substr(p.find_last_of("/\\"), (int)p.length());
+            if (!isHidden(reducedP))
+                v1.push_back(reducedP);
         }
         for (const auto & entry: fs::directory_iterator( s2 )){
             string p = entry.path();
-            v2.push_back(p.substr(p.find_last_of("/\\"), (int)p.length()));
+            string reducedP = p.substr(p.find_last_of("/\\"), (int)p.length());
+            if (!isHidden(reducedP))
+                v2.push_back(reducedP);
         }
     }
     
@@ -175,8 +189,8 @@ int main(){
     cout << padStr("only in",onlyV1Longest+1) << "| only in\n";
     cout << padStr(d1, onlyV1Longest+1) << "| " << d2 << '\n';
     //-1 for directory name??
-    string l1 = "(" + to_string(onlyInV1.size()) + "/" + to_string(n1-1) + ")";
-    string l2 = "(" + to_string(onlyInV2.size()) + "/" + to_string(n2-1) + ")";
+    string l1 = "(" + to_string(onlyInV1.size()) + "/" + to_string(n1) + ")";
+    string l2 = "(" + to_string(onlyInV2.size()) + "/" + to_string(n2) + ")";
     
     cout << padStr(l1,onlyV1Longest+1) << "| " << l2 << endl;
     
